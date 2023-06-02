@@ -10,8 +10,11 @@ void _trampoline(void)
     current_tcb->entry_point();
 }
 
-void tcb_init(tcb_t *tcb, void (*entry_point)(void))
+void tcb_init(tcb_t *tcb, int8_t pid, void (*entry_point)(void))
 {
+    tcb->pid = pid;
+    tcb->syscall_id = -1;
+
     tcb->entry_point = entry_point;
 
     uint8_t *stack_ptr = tcb->stack + INTERRUPT_STACK_SIZE - 1;

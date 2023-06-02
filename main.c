@@ -5,6 +5,7 @@
 #include "tcb.h"
 #include "pool_allocator.h"
 #include "list.h"
+#include "syscall.h"
 
 extern list_t ready_list;
 extern pool_allocator_t tcb_node_allocator;
@@ -15,7 +16,8 @@ void f1_func(void)
     printf("f1_func init\n");
     while (1)
     {
-        printf("f1_func\n");
+        int pid = syscall_getpid();
+        printf("f1_func %d\n", pid);
         _delay_ms(1000);
     }
 }
@@ -25,7 +27,8 @@ void f2_func(void)
     printf("f2_func init\n");
     while (1)
     {
-        printf("f2_func\n");
+        int pid = syscall_getpid();
+        printf("f2_func %d\n", pid);
         _delay_ms(1000);
     }
 }
@@ -45,8 +48,8 @@ int main(void)
     tcb_node1->data = tcb1;
     tcb_node2->data = tcb2;
 
-    tcb_init(tcb1, f1_func);
-    tcb_init(tcb2, f2_func);
+    tcb_init(tcb1, 1, f1_func);
+    tcb_init(tcb2, 2, f2_func);
 
     list_enqueue(&ready_list, tcb_node1);
     list_enqueue(&ready_list, tcb_node2);
