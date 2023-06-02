@@ -1,6 +1,8 @@
 #include "tcb.h"
 #include "vale_os.h"
 #include <stdio.h>
+#include "list.h"
+#include "syscall.h"
 
 extern tcb_t *current_tcb;
 
@@ -8,6 +10,8 @@ void _trampoline(void)
 {
     // printf("trampoline %d --------------------\n", current_tcb->entry_point);
     current_tcb->entry_point();
+
+    syscall_exit(0);
 }
 
 void tcb_init(tcb_t *tcb, int8_t pid, tcb_t *parent_tcb, void (*entry_point)(void))
@@ -15,6 +19,8 @@ void tcb_init(tcb_t *tcb, int8_t pid, tcb_t *parent_tcb, void (*entry_point)(voi
     tcb->pid = pid;
     tcb->syscall_id = -1;
     tcb->parent_tcb = parent_tcb;
+    tcb->status = THREAD_STATUS_INVALID;
+    list_init(&tcb->children);
 
     tcb->entry_point = entry_point;
 

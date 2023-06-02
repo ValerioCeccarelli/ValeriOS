@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include "uart.h"
 #include <vale_os.h>
 #include <avr/io.h>
 #include <util/delay.h>
@@ -13,82 +13,70 @@ extern pool_allocator_t tcb_node_allocator;
 extern pool_allocator_t tcb_allocator;
 
 void f3_func(void);
+void f2_func(void);
 
 void f1_func(void)
 {
-    printf("f1_func init\n");
+    my_printf("f1_func init\n");
+    _delay_ms(1000);
+    my_printf("f1_func spawn f2\n");
+    int pid2 = syscall_spawn(f2_func);
+    int term = syscall_wait(pid2);
+    my_printf("f1_func end f2 %d\n", term);
 
-    for (int i = 0; i < 3; i++)
-    {
-        printf("f1_func --- %d\n", i);
-        _delay_ms(1000);
-    }
-
-    for (int i = 0; i < 7; i++)
-    {
-        int pid = syscall_spawn(f3_func);
-        printf("f1_func spawned %d\n", pid);
-        _delay_ms(1000);
-    }
-
-    printf("f1_func done\n");
+    _delay_ms(1000);
+    my_printf("f1_func spawn f3\n");
+    int pid3 = syscall_spawn(f3_func);
+    _delay_ms(2000);
+    int term3 = syscall_wait(pid3);
+    my_printf("f1_func end f3 %d\n", term3);
 
     while (1)
     {
-        int pid = syscall_getpid();
-        printf("f1_func %d\n", pid);
+        my_printf("f1_func loop\n");
         _delay_ms(1000);
     }
 }
 
 void f2_func(void)
 {
-    printf("f2_func init\n");
-    while (1)
+    my_printf("f2_func init\n");
+    for (int i = 0; i < 3; i++)
     {
-        int pid = syscall_getpid();
-        printf("f2_func %d\n", pid);
+        my_printf("f2_func loop\n");
         _delay_ms(1000);
     }
+    my_printf("f2_func end f3\n");
+
+    syscall_exit(5);
 }
 
 void f3_func(void)
 {
-    printf("f3_func init\n");
-    while (1)
-    {
-        int pid = syscall_getpid();
-        printf("f3_func %d\n", pid);
-        _delay_ms(1000);
-    }
+    my_printf("f3_func init\n");
+    syscall_exit(7);
 }
 
 int main(void)
 {
     valeos_init();
 
-    printf("\n\n\n");
-    printf("main init\n");
+    my_printf("\n\n\n");
+    my_printf("main init\n");
 
     int pid1 = pid_get();
-    int pid2 = pid_get();
 
     tcb_t *tcb1 = (tcb_t *)pool_allocator_allocate(&tcb_allocator);
-    tcb_t *tcb2 = (tcb_t *)pool_allocator_allocate(&tcb_allocator);
 
     list_node_t *tcb_node1 = pool_allocator_allocate(&tcb_node_allocator);
-    list_node_t *tcb_node2 = pool_allocator_allocate(&tcb_node_allocator);
 
     tcb_node1->data = tcb1;
-    tcb_node2->data = tcb2;
 
     tcb_init(tcb1, pid1, 0, f1_func);
-    tcb_init(tcb2, pid2, 0, f2_func);
 
     list_enqueue(&ready_list, tcb_node1);
-    list_enqueue(&ready_list, tcb_node2);
 
-    printf("main start\n");
+    my_printf("main start\n");
 
     valeos_start();
     return 0;

@@ -78,6 +78,8 @@ void syscall_init(void)
     syscall_table[SYSCALL_GETPID] = internal_syscall_getpid;
     syscall_table[SYSCALL_SPAWN] = internal_syscall_spawn;
     syscall_table[SYSCALL_GETPARENTPID] = internal_syscall_getparentpid;
+    syscall_table[SYSCALL_EXIT] = internal_syscall_exit;
+    syscall_table[SYSCALL_WAIT] = internal_syscall_wait;
 
     init_syscall_tcb();
 }
@@ -118,4 +120,14 @@ int8_t syscall_spawn(void (*entry_point)(void))
 int8_t syscall_getparentpid(void)
 {
     return (int8_t)syscall(SYSCALL_GETPARENTPID, 0);
+}
+
+void syscall_exit(int exit_code)
+{
+    syscall(SYSCALL_EXIT, 1, exit_code);
+}
+
+int syscall_wait(int8_t pid)
+{
+    return syscall(SYSCALL_WAIT, 1, pid);
 }

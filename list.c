@@ -56,7 +56,7 @@ void list_remove(list_t *list, list_node_t *node)
     }
 }
 
-list_node_t *list_find(list_t *list, int (*predicate)(void *))
+list_node_t *list_find(list_t *list, int (*predicate)(const void *))
 {
     list_node_t *node = list->head;
     while (node != 0)
@@ -69,3 +69,26 @@ list_node_t *list_find(list_t *list, int (*predicate)(void *))
     }
     return 0;
 }
+
+// void list_foreach(list_t *list, void (*func)(void *))
+// {
+//     list_node_t *node = list->head;
+//     while (node != 0)
+//     {
+//         func(node->data);
+//         node = node->next;
+//     }
+// }
+
+// void list_remove_if(list_t *list, int (*predicate)(const void *))
+// {
+//     list_node_t *node = list->head;
+//     while (node != 0)
+//     {
+//         if (predicate(node->data))
+//         {
+//             list_remove(list, node);
+//         }
+//         node = node->next;
+//     }
+// }

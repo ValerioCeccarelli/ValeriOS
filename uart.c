@@ -6,6 +6,7 @@
 #include <avr/interrupt.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdarg.h>
 // ********************************************************************************
 // Macros and Defines
 // ********************************************************************************
@@ -86,4 +87,16 @@ void printf_init(void)
 
     // fire up the usart
     usart_init(MYUBRR);
+}
+
+void my_printf(char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+
+    cli();
+    vprintf(format, args);
+    sei();
+
+    va_end(args);
 }

@@ -22,12 +22,14 @@ void set_next_current_tcb(void)
     pool_allocator_free(&tcb_node_allocator, new_tcb_node);
 
     current_tcb = new_tcb;
+    current_tcb->status = THREAD_STATUS_RUNNING;
 }
 
 void remove_current_tcb(void)
 {
     list_node_t *current_tcb_node = pool_allocator_allocate(&tcb_node_allocator);
     current_tcb_node->data = current_tcb;
+    current_tcb->status = THREAD_STATUS_READY;
     list_enqueue(&ready_list, current_tcb_node);
 }
 

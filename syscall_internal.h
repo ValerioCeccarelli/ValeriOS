@@ -8,3 +8,9 @@ void internal_syscall_spawn(void);
 
 #define SYSCALL_GETPARENTPID 2
 void internal_syscall_getparentpid(void);
+
+#define SYSCALL_EXIT 3
+void internal_syscall_exit(void);
+
+#define SYSCALL_WAIT 4
+void internal_syscall_wait(void);
