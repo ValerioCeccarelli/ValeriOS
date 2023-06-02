@@ -6,6 +6,7 @@
 #include "context_switch.h"
 #include "tcb.h"
 #include "scheduler.h"
+#include "timer.h"
 
 #include <stdio.h>
 
@@ -16,6 +17,9 @@ interrupt_tcb_t *interrupt_tcb_p;
 
 void interrupt_func(void)
 {
+    increment_current_time();
+
+    awake_sleeping_threads();
     schedule();
 
     // this two functions must be called withouth other functions in between

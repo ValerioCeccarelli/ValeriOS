@@ -18,3 +18,5 @@ int8_t syscall_spawn(void (*entry_point)(void));
 int8_t syscall_getparentpid(void);
 void syscall_exit(int exit_code);
 int syscall_wait(int8_t pid);
+int syscall_wait_any(void);
+void syscall_sleep(int ms);

@@ -1,7 +1,6 @@
 #include "uart.h"
 #include <vale_os.h>
 #include <avr/io.h>
-#include <util/delay.h>
 #include "tcb.h"
 #include "pool_allocator.h"
 #include "list.h"
@@ -12,50 +11,132 @@ extern list_t ready_list;
 extern pool_allocator_t tcb_node_allocator;
 extern pool_allocator_t tcb_allocator;
 
-void f3_func(void);
+#pragma region try_idle_thread
+
+// void f1_func(void)
+// {
+//     my_printf("f1 start\n");
+//     while (1)
+//     {
+//         my_printf("f1\n");
+//         syscall_sleep(1000);
+//     }
+// }
+
+#pragma endregion
+
+#pragma region try_spawn
+
+// void f2_func(void);
+
+// void f1_func(void)
+// {
+//     my_printf("f1 start\n");
+
+//     for (int i = 0; i < 5; i++)
+//     {
+//         int pid = syscall_spawn(f2_func);
+//         my_printf("f1 spawn %d\n", pid);
+//     }
+
+//     while (1)
+//     {
+//         my_printf("f1 loop\n");
+//         syscall_sleep(1000);
+//     }
+// }
+
+// void f2_func(void)
+// {
+//     int pid = syscall_getpid();
+//     my_printf("f2 start - %d\n", pid);
+//     while (1)
+//     {
+//         my_printf("f2 loop %d\n", pid);
+//         syscall_sleep(1000);
+//     }
+// }
+
+#pragma endregion
+
+#pragma region try_await
+
+// void f2_func(void);
+// void f3_func(void);
+
+// void f1_func(void)
+// {
+//     my_printf("f1 start\n");
+
+//     my_printf("f1 spawn f2\n");
+//     int pid2 = syscall_spawn(f2_func);
+//     syscall_sleep(1000);
+//     my_printf("f1 wait f2\n");
+//     int ret2 = syscall_wait(pid2);
+
+//     syscall_sleep(1000);
+
+//     my_printf("f1 spawn f3\n");
+//     int pid3 = syscall_spawn(f3_func);
+//     my_printf("f1 wait f3\n");
+//     int ret3 = syscall_wait(pid3);
+
+//     while (1)
+//     {
+//         my_printf("f1 loop\n");
+//         syscall_sleep(1000);
+//     }
+// }
+
+// void f2_func(void)
+// {
+//     my_printf("f2 start\n");
+// }
+
+// void f3_func(void)
+// {
+//     my_printf("f3 start\n");
+//     syscall_sleep(1000);
+// }
+
+#pragma endregion
+
+#pragma region try_exit_without_parent
+
 void f2_func(void);
+void f3_func(void);
 
 void f1_func(void)
 {
-    my_printf("f1_func init\n");
-    _delay_ms(1000);
-    my_printf("f1_func spawn f2\n");
-    int pid2 = syscall_spawn(f2_func);
-    int term = syscall_wait(pid2);
-    my_printf("f1_func end f2 %d\n", term);
+    my_printf("f1 start\n");
 
-    _delay_ms(1000);
-    my_printf("f1_func spawn f3\n");
-    int pid3 = syscall_spawn(f3_func);
-    _delay_ms(2000);
-    int term3 = syscall_wait(pid3);
-    my_printf("f1_func end f3 %d\n", term3);
+    syscall_spawn(f2_func);
 
     while (1)
     {
-        my_printf("f1_func loop\n");
-        _delay_ms(1000);
+        my_printf("f1 loop\n");
+        syscall_sleep(1000);
     }
 }
 
 void f2_func(void)
 {
-    my_printf("f2_func init\n");
-    for (int i = 0; i < 3; i++)
-    {
-        my_printf("f2_func loop\n");
-        _delay_ms(1000);
-    }
-    my_printf("f2_func end f3\n");
+    my_printf("f2 start\n");
 
-    syscall_exit(5);
+    syscall_spawn(f3_func);
 }
 
 void f3_func(void)
 {
-    my_printf("f3_func init\n");
-    syscall_exit(7);
+    my_printf("f3 start\n");
+    for (int i = 0; i < 3; i++)
+    {
+        my_printf("f3 loop\n");
+        syscall_sleep(1000);
+    }
 }
+
+#pragma endregion
 
 int main(void)
 {

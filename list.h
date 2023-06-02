@@ -19,5 +19,4 @@ list_node_t *list_dequeue(list_t *list);
 void list_remove(list_t *list, list_node_t *node);
 
 list_node_t *list_find(list_t *list, int (*predicate)(const void *));
-// void list_foreach(list_t *list, void (*func)(void *));
-// void list_remove_if(list_t *list, int (*predicate)(const void *));
+void list_foreach(list_t *list, void (*func)(list_node_t *));

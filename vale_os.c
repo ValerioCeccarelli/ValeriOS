@@ -21,7 +21,10 @@ pool_allocator_t tcb_node_allocator;
 uint8_t tcb_node_memory[REQUIRED_MEMORY_SIZE(sizeof(list_node_t), MAX_THREAD_NODE_COUNT)];
 
 list_t ready_list;
-list_t wait_list;
+list_t wait_list; // TODO: non uso mai questa lista per scorrerla, ma solo per poggiarci i tcb che aspettano... è necessaria?
+// in particolare io metto un tcb in wait quando la syscall non trova un thread già terminato
+// ma essite ancora un puntatore nel tcb figlio che punta al parent, e infatti viene usato quello per risvegliare il padre
+// WARNING: se un processo va in waiting list io non lo tolgo mai... il list node rimane allocato per sempre
 list_t sleep_list;
 
 void valeos_init(void)
@@ -30,6 +33,7 @@ void valeos_init(void)
     interrupt_init();
     syscall_init();
     pid_init();
+    scheduler_init();
 
     // printf("init allocator\n");
 

@@ -14,3 +14,6 @@ void internal_syscall_exit(void);
 
 #define SYSCALL_WAIT 4
 void internal_syscall_wait(void);
+
+#define SYSCALL_SLEEP 5
+void internal_syscall_sleep(void);

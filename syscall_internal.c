@@ -6,11 +6,14 @@
 #include <stdint.h>
 #include "scheduler.h"
 #include "context_switch.h"
+#include "timer.h"
+#include "vale_os.h"
 
 extern tcb_t *current_tcb;
 
 extern list_t ready_list;
 extern list_t wait_list;
+extern list_t sleep_list;
 
 extern pool_allocator_t tcb_allocator;
 extern pool_allocator_t tcb_node_allocator;
@@ -58,6 +61,23 @@ void internal_syscall_getparentpid(void)
     }
 }
 
+void _remove_or_make_orphan_v(list_node_t *node)
+{
+    tcb_t *tcb = (tcb_t *)node->data;
+    if (tcb->status == THREAD_STATUS_EXITED)
+    {
+        list_remove(&current_tcb->children, node);
+
+        pid_free(tcb->pid);
+        pool_allocator_free(&tcb_allocator, tcb);
+        pool_allocator_free(&tcb_node_allocator, node);
+    }
+    else
+    {
+        tcb->parent_tcb = 0;
+    }
+}
+
 void _remove_or_make_orphan(list_t *list)
 {
     list_node_t *node = list->head;
@@ -90,7 +110,9 @@ void internal_syscall_exit(void)
     // if a process exits
     // if it has children alive, set their parent to -1
     // if it has exited children, free them
-    _remove_or_make_orphan(&exited_tcb->children);
+
+    list_foreach(&exited_tcb->children, _remove_or_make_orphan_v);
+    // _remove_or_make_orphan(&exited_tcb->children);
 
     if (exited_tcb->parent_tcb == 0)
     {
@@ -110,6 +132,7 @@ void internal_syscall_exit(void)
         {
             exited_tcb->parent_tcb->status = THREAD_STATUS_READY;
             exited_tcb->parent_tcb->syscall_result = exited_tcb->exit_code;
+            // TODO: there is a list node already allocated in the wait list; currently we never free it
             list_node_t *tcb_node = (list_node_t *)pool_allocator_allocate(&tcb_node_allocator);
             tcb_node->data = exited_tcb->parent_tcb;
             list_enqueue(&ready_list, tcb_node);
@@ -194,4 +217,19 @@ void internal_syscall_wait(void)
             set_next_current_tcb();
         }
     }
+}
+
+void internal_syscall_sleep(void)
+{
+    int sleep_time = current_tcb->syscall_args[0];
+    sleep_time = sleep_time * SYSTEM_TICKS_PER_SEC / 1000;
+    current_tcb->status = THREAD_STATUS_SLEEPING;
+
+    current_tcb->sleep_until = get_current_time() + sleep_time;
+
+    list_node_t *tcb_node = (list_node_t *)pool_allocator_allocate(&tcb_node_allocator);
+    tcb_node->data = current_tcb;
+    list_enqueue(&sleep_list, tcb_node);
+
+    set_next_current_tcb();
 }

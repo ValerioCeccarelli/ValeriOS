@@ -34,6 +34,8 @@ typedef struct tcb
 
     thread_status_t status;
 
+    int sleep_until;
+
 } tcb_t;
 
 void tcb_init(tcb_t *tcb, int8_t pid, tcb_t *parent_tcb, void (*entry_point)(void));
