@@ -26,6 +26,21 @@ extern pool_allocator_t tcb_allocator;
 
 #pragma endregion
 
+#pragma region try_get_pid
+
+// void f1_func(void)
+// {
+//     int pid = syscall_getpid();
+//     my_printf("f1 start with pid %d\n", pid);
+//     while (1)
+//     {
+//         my_printf("f1\n");
+//         syscall_sleep(1000);
+//     }
+// }
+
+#pragma endregion
+
 #pragma region try_spawn
 
 // void f2_func(void);
@@ -62,43 +77,53 @@ extern pool_allocator_t tcb_allocator;
 
 #pragma region try_await
 
-// void f2_func(void);
-// void f3_func(void);
+void f2_func(void);
+void f3_func(void);
 
-// void f1_func(void)
-// {
-//     my_printf("f1 start\n");
+void f1_func(void)
+{
+    my_printf("f1 start\n");
 
-//     my_printf("f1 spawn f2\n");
-//     int pid2 = syscall_spawn(f2_func);
-//     syscall_sleep(1000);
-//     my_printf("f1 wait f2\n");
-//     int ret2 = syscall_wait(pid2);
+    my_printf("f1 spawn f2\n");
+    int pid2 = syscall_spawn(f2_func);
+    syscall_sleep(1000);
+    my_printf("f1 wait f2\n");
+    int f2_result = 0;
+    int ret2 = syscall_wait(pid2, &f2_result);
+    if (ret2)
+        my_printf("f1 fail to wait f2\n");
+    my_printf("f1 f2 result %d\n", f2_result);
 
-//     syscall_sleep(1000);
+    syscall_sleep(1000);
 
-//     my_printf("f1 spawn f3\n");
-//     int pid3 = syscall_spawn(f3_func);
-//     my_printf("f1 wait f3\n");
-//     int ret3 = syscall_wait(pid3);
+    my_printf("f1 spawn f3\n");
+    int pid3 = syscall_spawn(f3_func);
+    my_printf("f1 wait f3\n");
+    int f3_result = 0;
+    int ret3 = syscall_wait(pid3, &f3_result);
+    if (ret3)
+        my_printf("f1 fail to wait f3\n");
+    my_printf("f1 f3 result %d\n", f3_result);
 
-//     while (1)
-//     {
-//         my_printf("f1 loop\n");
-//         syscall_sleep(1000);
-//     }
-// }
+    while (1)
+    {
+        my_printf("f1 loop\n");
+        syscall_sleep(1000);
+    }
+}
 
-// void f2_func(void)
-// {
-//     my_printf("f2 start\n");
-// }
+void f2_func(void)
+{
+    my_printf("f2 start\n");
+    syscall_exit(2);
+}
 
-// void f3_func(void)
-// {
-//     my_printf("f3 start\n");
-//     syscall_sleep(1000);
-// }
+void f3_func(void)
+{
+    my_printf("f3 start\n");
+    syscall_sleep(1000);
+    syscall_exit(3);
+}
 
 #pragma endregion
 
@@ -141,83 +166,83 @@ extern pool_allocator_t tcb_allocator;
 
 #pragma region semaphores
 
-#define MY_SEM_ID 1
+// #define MY_SEM_ID 1
 
-void f2_func(void);
-void f3_func(void);
+// void f2_func(void);
+// void f3_func(void);
 
-void f1_func(void)
-{
-    my_printf("f1 start\n");
+// void f1_func(void)
+// {
+//     my_printf("f1 start\n");
 
-    int res1 = syscall_sem_create(MY_SEM_ID, 2);
-    if (res1)
-        my_printf("f1 sem create fail\n");
+//     int res1 = syscall_sem_create(MY_SEM_ID, 2);
+//     if (res1)
+//         my_printf("f1 sem create fail\n");
 
-    int res2 = syscall_sem_open(MY_SEM_ID);
-    if (res2)
-        my_printf("f1 sem open fail\n");
+//     int res2 = syscall_sem_open(MY_SEM_ID);
+//     if (res2)
+//         my_printf("f1 sem open fail\n");
 
-    int res3 = syscall_spawn(f2_func);
-    my_printf("f1 spawn f2: %d\n", res3);
+//     int res3 = syscall_spawn(f2_func);
+//     my_printf("f1 spawn f2: %d\n", res3);
 
-    int res7 = syscall_spawn(f3_func);
-    my_printf("f1 spawn f3: %d\n", res7);
+//     int res7 = syscall_spawn(f3_func);
+//     my_printf("f1 spawn f3: %d\n", res7);
 
-    while (1)
-    {
-        int res4 = syscall_sem_wait(MY_SEM_ID);
-        if (res4)
-            my_printf("f1 sem wait failed\n");
-        my_printf("f1 loop 1\n");
-        syscall_sleep(1000);
-        my_printf("f1 loop 2\n");
-        syscall_sleep(1000);
-        my_printf("f1 loop 3\n");
-        syscall_sleep(1000);
-        int res5 = syscall_sem_post(MY_SEM_ID);
-        if (res5)
-            my_printf("f1 post wait failed\n");
-    }
-}
+//     while (1)
+//     {
+//         int res4 = syscall_sem_wait(MY_SEM_ID);
+//         if (res4)
+//             my_printf("f1 sem wait failed\n");
+//         my_printf("f1 loop 1\n");
+//         syscall_sleep(1000);
+//         my_printf("f1 loop 2\n");
+//         syscall_sleep(1000);
+//         my_printf("f1 loop 3\n");
+//         syscall_sleep(1000);
+//         int res5 = syscall_sem_post(MY_SEM_ID);
+//         if (res5)
+//             my_printf("f1 post wait failed\n");
+//     }
+// }
 
-void f2_func(void)
-{
-    my_printf("f2 start\n");
+// void f2_func(void)
+// {
+//     my_printf("f2 start\n");
 
-    syscall_sem_open(MY_SEM_ID);
+//     syscall_sem_open(MY_SEM_ID);
 
-    while (1)
-    {
-        syscall_sem_wait(MY_SEM_ID);
-        my_printf("f2 loop 1\n");
-        syscall_sleep(1000);
-        my_printf("f2 loop 2\n");
-        syscall_sleep(1000);
-        my_printf("f2 loop 3\n");
-        syscall_sleep(1000);
-        syscall_sem_post(MY_SEM_ID);
-    }
-}
+//     while (1)
+//     {
+//         syscall_sem_wait(MY_SEM_ID);
+//         my_printf("f2 loop 1\n");
+//         syscall_sleep(1000);
+//         my_printf("f2 loop 2\n");
+//         syscall_sleep(1000);
+//         my_printf("f2 loop 3\n");
+//         syscall_sleep(1000);
+//         syscall_sem_post(MY_SEM_ID);
+//     }
+// }
 
-void f3_func(void)
-{
-    my_printf("f3 start\n");
+// void f3_func(void)
+// {
+//     my_printf("f3 start\n");
 
-    syscall_sem_open(MY_SEM_ID);
+//     syscall_sem_open(MY_SEM_ID);
 
-    while (1)
-    {
-        syscall_sem_wait(MY_SEM_ID);
-        my_printf("f3 loop 1\n");
-        syscall_sleep(1000);
-        my_printf("f3 loop 2\n");
-        syscall_sleep(1000);
-        my_printf("f3 loop 3\n");
-        syscall_sleep(1000);
-        syscall_sem_post(MY_SEM_ID);
-    }
-}
+//     while (1)
+//     {
+//         syscall_sem_wait(MY_SEM_ID);
+//         my_printf("f3 loop 1\n");
+//         syscall_sleep(1000);
+//         my_printf("f3 loop 2\n");
+//         syscall_sleep(1000);
+//         my_printf("f3 loop 3\n");
+//         syscall_sleep(1000);
+//         syscall_sem_post(MY_SEM_ID);
+//     }
+// }
 
 #pragma endregion
 

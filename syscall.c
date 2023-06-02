@@ -134,14 +134,14 @@ void syscall_exit(int exit_code)
     syscall(SYSCALL_EXIT, 1, exit_code);
 }
 
-int syscall_wait(int8_t pid)
+int syscall_wait(int8_t pid, int *exit_code)
 {
-    return syscall(SYSCALL_WAIT, 1, pid);
+    return syscall(SYSCALL_WAIT, 2, pid, exit_code);
 }
 
-int syscall_wait_any(void)
+int syscall_wait_any(int *exit_code)
 {
-    return syscall_wait(0);
+    return syscall_wait(0, exit_code);
 }
 
 void syscall_sleep(int ms)

@@ -5,13 +5,11 @@
 int8_t free_pids[MAX_THREAD_COUNT];
 int8_t free_pids_count = MAX_THREAD_COUNT;
 
-// TODO: think if pids should be init in reverse order
-
 void pid_init(void)
 {
     for (int i = 0; i < MAX_THREAD_COUNT; i++)
     {
-        free_pids[i] = i;
+        free_pids[i] = MAX_THREAD_COUNT - i - 1;
     }
 }
 

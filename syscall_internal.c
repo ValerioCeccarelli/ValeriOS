@@ -14,7 +14,6 @@
 extern tcb_t *current_tcb;
 
 extern list_t ready_list;
-extern list_t wait_list;
 extern list_t sleep_list;
 extern list_t sem_list;
 
@@ -136,12 +135,19 @@ void internal_syscall_exit(void)
              exited_tcb->parent_tcb->syscall_args[0] == exited_tcb->pid))
         {
             exited_tcb->parent_tcb->status = THREAD_STATUS_READY;
-            exited_tcb->parent_tcb->syscall_result = exited_tcb->exit_code;
-            // TODO: there is a list node already allocated in the wait list; currently we never free it
+            *((int *)exited_tcb->parent_tcb->syscall_args[1]) = exited_tcb->exit_code;
+            exited_tcb->parent_tcb->syscall_result = 0;
+
             list_node_t *tcb_node = (list_node_t *)pool_allocator_allocate(&tcb_node_allocator);
             tcb_node->data = exited_tcb->parent_tcb;
             list_enqueue(&ready_list, tcb_node);
+
+            // delete myself
+            pid_free(exited_tcb->pid);
+            pool_allocator_free(&tcb_allocator, exited_tcb);
         }
+
+        // else, this process is a zombie
     }
 
     set_next_current_tcb();
@@ -163,8 +169,14 @@ int _find_exited(const void *data)
 void internal_syscall_wait(void)
 {
     int8_t pid = (int8_t)current_tcb->syscall_args[0];
+    int *exit_code = (int *)current_tcb->syscall_args[1];
 
-    // TODO: what if there is no child?
+    // if process has no children, return error
+    if (&current_tcb->children.head == 0)
+    {
+        current_tcb->syscall_result = -1;
+        return;
+    }
 
     if (pid == 0)
     {
@@ -177,14 +189,14 @@ void internal_syscall_wait(void)
             current_tcb->status = THREAD_STATUS_WAITING;
             list_node_t *tcb_node = (list_node_t *)pool_allocator_allocate(&tcb_node_allocator);
             tcb_node->data = current_tcb;
-            list_enqueue(&wait_list, tcb_node);
 
             set_next_current_tcb();
         }
         else
         {
             tcb_t *child_tcb = (tcb_t *)child_node->data;
-            current_tcb->syscall_result = child_tcb->exit_code;
+            *exit_code = child_tcb->exit_code;
+            current_tcb->syscall_result = 0;
             list_remove(&current_tcb->children, child_node);
 
             pid_free(child_tcb->pid);
@@ -199,13 +211,19 @@ void internal_syscall_wait(void)
         _pid_to_find = pid;
         list_node_t *child_node = list_find(&current_tcb->children, _find_pid);
 
-        // TODO: what if the child is not found? (so there is no such child with the pid)
+        // if child doesn't exist, return error
+        if (child_node == 0)
+        {
+            current_tcb->syscall_result = -1;
+            return;
+        }
 
         tcb_t *child_tcb = (tcb_t *)child_node->data;
 
         if (child_tcb->status == THREAD_STATUS_EXITED)
         {
-            current_tcb->syscall_result = child_tcb->exit_code;
+            *exit_code = child_tcb->exit_code;
+            current_tcb->syscall_result = 0;
             list_remove(&current_tcb->children, child_node);
 
             pid_free(child_tcb->pid);
@@ -217,7 +235,6 @@ void internal_syscall_wait(void)
             current_tcb->status = THREAD_STATUS_WAITING;
             list_node_t *tcb_node = (list_node_t *)pool_allocator_allocate(&tcb_node_allocator);
             tcb_node->data = current_tcb;
-            list_enqueue(&wait_list, tcb_node);
 
             set_next_current_tcb();
         }
