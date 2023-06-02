@@ -19,7 +19,7 @@ AVRDUDE_FLAGS += -D -q -V -C /usr/share/arduino/hardware/tools/avr/../avrdude.co
 AVRDUDE_FLAGS += -c arduino
 
 
-OBJS=atomport_asm.o interrupt.o list.o pool_allocator.o scheduler.o syscall.o syscall_internal.o tcb.o timer.o uart.o vale_os.o
+OBJS=atomport_asm.o interrupt.o list.o pid.o pool_allocator.o scheduler.o syscall.o syscall_internal.o tcb.o timer.o uart.o vale_os.o
 
 
 BINS= main.elf

@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "vale_os.h"
 
-typedef struct
+typedef struct tcb
 {
     uint8_t *sp_save_ptr;
     uint8_t stack[THREAD_STACK_SIZE];
@@ -16,6 +16,8 @@ typedef struct
 
     int8_t pid;
 
+    struct tcb *parent_tcb;
+
 } tcb_t;
 
-void tcb_init(tcb_t *tcb, int8_t pid, void (*entry_point)(void));
+void tcb_init(tcb_t *tcb, int8_t pid, tcb_t *parent_tcb, void (*entry_point)(void));

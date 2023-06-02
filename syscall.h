@@ -14,3 +14,5 @@ void syscall_init(void);
 int syscall(int syscall_id, int arg_count, ...);
 
 int8_t syscall_getpid(void);
+int8_t syscall_spawn(void (*entry_point)(void));
+int8_t syscall_getparentpid(void);

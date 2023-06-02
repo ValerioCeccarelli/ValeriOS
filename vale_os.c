@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include "interrupt.h"
 #include "syscall.h"
+#include "pid.h"
 
 #include <stdio.h>
 
@@ -28,6 +29,7 @@ void valeos_init(void)
     printf_init();
     interrupt_init();
     syscall_init();
+    pid_init();
 
     // printf("init allocator\n");
 
