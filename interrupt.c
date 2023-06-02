@@ -15,6 +15,9 @@ extern tcb_t *current_tcb;
 interrupt_tcb_t interrupt_tcb;
 interrupt_tcb_t *interrupt_tcb_p;
 
+void reset_interrupt_tcb(void);
+void interrupt_func(void);
+
 void interrupt_func(void)
 {
     increment_current_time();

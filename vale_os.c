@@ -47,3 +47,15 @@ void valeos_start(void)
     // this should be the last thing because it will change the context, starting the first thread
     scheduler_start();
 }
+
+void valeos_create_first_thread(void (*func)(void))
+{
+    int pid1 = pid_get();
+
+    tcb_t *tcb1 = (tcb_t *)pool_allocator_allocate(&tcb_allocator);
+    tcb_init(tcb1, pid1, 0, func);
+
+    list_node_t *tcb_node1 = pool_allocator_allocate(&tcb_node_allocator);
+    tcb_node1->data = tcb1;
+    list_enqueue(&ready_list, tcb_node1);
+}

@@ -9,6 +9,5 @@ typedef struct
     uint8_t stack[INTERRUPT_STACK_SIZE];
 } interrupt_tcb_t;
 
+/// @brief Function that initializes the interrupt module.
 void interrupt_init(void);
-void reset_interrupt_tcb(void);
-void interrupt_func(void);

@@ -172,7 +172,7 @@ void internal_syscall_wait(void)
     int *exit_code = (int *)current_tcb->syscall_args[1];
 
     // if process has no children, return error
-    if (&current_tcb->children.head == 0)
+    if (list_is_empty(&current_tcb->children))
     {
         current_tcb->syscall_result = -1;
         return;
@@ -373,7 +373,7 @@ void internal_syscall_sem_post(void)
 
     semaphore_t *sem = (semaphore_t *)sem_node->data;
 
-    if (sem->waiting_threads.head != 0)
+    if (!list_is_empty(&sem->waiting_threads))
     {
         list_node_t *tcb_node = list_dequeue(&sem->waiting_threads);
         tcb_t *tcb = (tcb_t *)tcb_node->data;

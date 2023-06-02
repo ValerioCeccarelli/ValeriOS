@@ -7,7 +7,6 @@
 
 #include "uart.h"
 
-/* CPU Frequency */
 #ifdef F_CPU
 #define AVR_CPU_HZ F_CPU
 #else
@@ -47,20 +46,18 @@ void increment_current_time(void)
     current_time++;
 }
 
+void _remove_if_sleep_until_is_passed(list_node_t *node)
+{
+    tcb_t *tcb = (tcb_t *)node->data;
+    if (tcb->sleep_until <= current_time)
+    {
+        tcb->status = THREAD_STATUS_READY;
+        list_remove(&sleep_list, node);
+        list_enqueue(&ready_list, node);
+    }
+}
+
 void awake_sleeping_threads(void)
 {
-    list_node_t *node = sleep_list.head;
-    while (node != 0)
-    {
-        list_node_t *node_next = node->next;
-        tcb_t *tcb = (tcb_t *)node->data;
-        // my_printf("awake_sleeping_threads %d %d\n", tcb->sleep_until, current_time);
-        if (tcb->sleep_until <= current_time)
-        {
-            tcb->status = THREAD_STATUS_READY;
-            list_remove(&sleep_list, node);
-            list_enqueue(&ready_list, node);
-        }
-        node = node_next;
-    }
+    list_foreach(&sleep_list, _remove_if_sleep_until_is_passed);
 }

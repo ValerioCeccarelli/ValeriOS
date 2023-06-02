@@ -10,4 +10,5 @@ typedef struct
     int open_count;
 } semaphore_t;
 
+/// @brief Function that initializes the semaphore module.
 void semaphore_init(void);

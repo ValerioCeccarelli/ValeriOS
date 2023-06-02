@@ -80,3 +80,8 @@ void list_foreach(list_t *list, void (*func)(list_node_t *))
         node = next;
     }
 }
+
+int list_is_empty(list_t *list)
+{
+    return list->head == 0;
+}

@@ -39,4 +39,9 @@ typedef struct tcb
     list_t semaphores;
 } tcb_t;
 
+/// @brief Function that initializes a tcb.
+/// @param tcb TCB to initialize.
+/// @param pid PID of the thread.
+/// @param parent_tcb Parent TCB (0 if none is also valid).
+/// @param entry_point Entry point of the thread.
 void tcb_init(tcb_t *tcb, int8_t pid, tcb_t *parent_tcb, void (*entry_point)(void));

@@ -70,7 +70,7 @@ void scheduler_start(void)
 
 void set_next_current_tcb(void)
 {
-    if (ready_list.head == 0)
+    if (list_is_empty(&ready_list))
     {
         current_tcb = (tcb_t *)&idle_tcb;
     }
