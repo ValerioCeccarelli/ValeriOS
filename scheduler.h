@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#define IDLE_STACK_SIZE 20
+#define IDLE_STACK_SIZE 23
 
 typedef struct
 {

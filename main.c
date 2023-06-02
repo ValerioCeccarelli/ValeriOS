@@ -6,6 +6,7 @@
 #include "list.h"
 #include "syscall.h"
 #include "pid.h"
+#include "util/delay.h"
 
 extern list_t ready_list;
 extern pool_allocator_t tcb_node_allocator;
