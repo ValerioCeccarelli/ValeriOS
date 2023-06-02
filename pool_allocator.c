@@ -1,6 +1,8 @@
 #include "pool_allocator.h"
 
 #include <stdint.h>
+#include "uart.h"
+#include <avr/interrupt.h>
 
 void pool_allocator_init(pool_allocator_t *allocator, uint8_t *memory, uint32_t block_size, uint32_t block_count)
 {

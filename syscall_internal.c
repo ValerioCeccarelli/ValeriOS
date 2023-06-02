@@ -8,15 +8,20 @@
 #include "context_switch.h"
 #include "timer.h"
 #include "vale_os.h"
+#include "semaphore.h"
+#include <stdio.h>
 
 extern tcb_t *current_tcb;
 
 extern list_t ready_list;
 extern list_t wait_list;
 extern list_t sleep_list;
+extern list_t sem_list;
 
 extern pool_allocator_t tcb_allocator;
 extern pool_allocator_t tcb_node_allocator;
+extern pool_allocator_t sem_node_allocator;
+extern pool_allocator_t sem_allocator;
 
 void internal_syscall_getpid(void)
 {
@@ -232,4 +237,182 @@ void internal_syscall_sleep(void)
     list_enqueue(&sleep_list, tcb_node);
 
     set_next_current_tcb();
+}
+
+int _sem_id_to_find = -1;
+int _find_sem(const void *data)
+{
+    semaphore_t *sem = (semaphore_t *)data;
+    return sem->id == _sem_id_to_find;
+}
+void internal_syscall_sem_create(void)
+{
+    int sem_id = current_tcb->syscall_args[0];
+    int sem_value = current_tcb->syscall_args[1];
+
+    // check if the semaphore already exists
+    _sem_id_to_find = sem_id;
+    list_node_t *sem_node = list_find(&sem_list, _find_sem);
+    if (sem_node != 0)
+    {
+        current_tcb->syscall_result = -1;
+        return;
+    }
+
+    // create the semaphore
+    semaphore_t *new_sem = (semaphore_t *)pool_allocator_allocate(&sem_allocator);
+    if (new_sem == 0)
+    {
+        current_tcb->syscall_result = -2;
+        return;
+    }
+
+    // initialize the semaphore
+    new_sem->id = sem_id;
+    new_sem->value = sem_value;
+    new_sem->open_count = 0;
+
+    // add the semaphore to the semaphore list
+    sem_node = (list_node_t *)pool_allocator_allocate(&sem_node_allocator);
+    sem_node->data = new_sem;
+    list_enqueue(&sem_list, sem_node);
+
+    current_tcb->syscall_result = 0;
+    return;
+}
+
+void internal_syscall_sem_close(void)
+{
+    int id = current_tcb->syscall_args[0];
+
+    // check if the semaphore exists
+    _sem_id_to_find = id;
+    list_node_t *sem_node = list_find(&current_tcb->semaphores, _find_sem);
+    if (sem_node == 0)
+    {
+        current_tcb->syscall_result = -1;
+        return;
+    }
+
+    // notify the semaphore that this thread is no longer using it
+    semaphore_t *sem = (semaphore_t *)sem_node->data;
+    sem->open_count--;
+
+    // remove the semaphore from the thread's semaphore list
+    list_remove(&current_tcb->semaphores, sem_node);
+    pool_allocator_free(&sem_node_allocator, sem_node);
+
+    current_tcb->syscall_result = 0;
+}
+
+void internal_syscall_sem_wait(void)
+{
+    int id = current_tcb->syscall_args[0];
+
+    // check if the semaphore exists
+    _sem_id_to_find = id;
+    list_node_t *sem_node = list_find(&current_tcb->semaphores, _find_sem);
+    if (sem_node == 0)
+    {
+        current_tcb->syscall_result = -1;
+        return;
+    }
+
+    semaphore_t *sem = (semaphore_t *)sem_node->data;
+
+    sem->value--;
+
+    if (sem->value >= 0)
+    {
+        // the thread can continue
+        current_tcb->syscall_result = 0;
+        return;
+    }
+    else
+    {
+        // the thread must wait
+        current_tcb->status = THREAD_STATUS_WAITING;
+        list_node_t *tcb_node = (list_node_t *)pool_allocator_allocate(&tcb_node_allocator);
+        tcb_node->data = current_tcb;
+        list_enqueue(&sem->waiting_threads, tcb_node);
+
+        current_tcb->syscall_result = 0;
+
+        set_next_current_tcb();
+    }
+}
+
+void internal_syscall_sem_post(void)
+{
+    int id = current_tcb->syscall_args[0];
+
+    _sem_id_to_find = id;
+    list_node_t *sem_node = list_find(&current_tcb->semaphores, _find_sem);
+    if (sem_node == 0)
+    {
+        current_tcb->syscall_result = -1;
+        return;
+    }
+
+    semaphore_t *sem = (semaphore_t *)sem_node->data;
+
+    if (sem->waiting_threads.head != 0)
+    {
+        list_node_t *tcb_node = list_dequeue(&sem->waiting_threads);
+        tcb_t *tcb = (tcb_t *)tcb_node->data;
+
+        tcb->status = THREAD_STATUS_READY;
+        tcb_node->data = tcb;
+        list_enqueue(&ready_list, tcb_node);
+    }
+
+    sem->value++;
+}
+
+void internal_syscall_sem_open(void)
+{
+    int id = current_tcb->syscall_args[0];
+
+    _sem_id_to_find = id;
+    list_node_t *sem_node = list_find(&sem_list, _find_sem);
+    if (sem_node == 0)
+    {
+        current_tcb->syscall_result = -1;
+        return;
+    }
+
+    semaphore_t *sem = (semaphore_t *)sem_node->data;
+
+    sem->open_count++;
+
+    // add the semaphore to the list of semaphores that the current thread has opened
+    sem_node = (list_node_t *)pool_allocator_allocate(&sem_node_allocator);
+    sem_node->data = sem;
+    list_enqueue(&current_tcb->semaphores, sem_node);
+
+    current_tcb->syscall_result = 0;
+}
+
+void internal_syscall_sem_unlink(void)
+{
+    int id = current_tcb->syscall_args[0];
+
+    _sem_id_to_find = id;
+    list_node_t *sem_node = list_find(&sem_list, _find_sem);
+    if (sem_node == 0)
+    {
+        current_tcb->syscall_result = -1;
+        return;
+    }
+
+    semaphore_t *sem = (semaphore_t *)sem_node->data;
+    if (sem->open_count > 0)
+    {
+        current_tcb->syscall_result = -1;
+        return;
+    }
+
+    list_remove(&sem_list, sem_node);
+    pool_allocator_free(&sem_node_allocator, sem_node);
+    pool_allocator_free(&sem_allocator, sem);
 }

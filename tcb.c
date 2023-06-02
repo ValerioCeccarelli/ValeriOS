@@ -21,6 +21,7 @@ void tcb_init(tcb_t *tcb, int8_t pid, tcb_t *parent_tcb, void (*entry_point)(voi
     tcb->parent_tcb = parent_tcb;
     tcb->status = THREAD_STATUS_INVALID;
     list_init(&tcb->children);
+    list_init(&tcb->semaphores);
 
     tcb->entry_point = entry_point;
 

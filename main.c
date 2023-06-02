@@ -104,6 +104,45 @@ extern pool_allocator_t tcb_allocator;
 
 #pragma region try_exit_without_parent
 
+// void f2_func(void);
+// void f3_func(void);
+
+// void f1_func(void)
+// {
+//     my_printf("f1 start\n");
+
+//     syscall_spawn(f2_func);
+
+//     while (1)
+//     {
+//         my_printf("f1 loop\n");
+//         syscall_sleep(1000);
+//     }
+// }
+
+// void f2_func(void)
+// {
+//     my_printf("f2 start\n");
+
+//     syscall_spawn(f3_func);
+// }
+
+// void f3_func(void)
+// {
+//     my_printf("f3 start\n");
+//     for (int i = 0; i < 3; i++)
+//     {
+//         my_printf("f3 loop\n");
+//         syscall_sleep(1000);
+//     }
+// }
+
+#pragma endregion
+
+#pragma region semaphores
+
+#define MY_SEM_ID 1
+
 void f2_func(void);
 void f3_func(void);
 
@@ -111,12 +150,34 @@ void f1_func(void)
 {
     my_printf("f1 start\n");
 
-    syscall_spawn(f2_func);
+    int res1 = syscall_sem_create(MY_SEM_ID, 2);
+    if (res1)
+        my_printf("f1 sem create fail\n");
+
+    int res2 = syscall_sem_open(MY_SEM_ID);
+    if (res2)
+        my_printf("f1 sem open fail\n");
+
+    int res3 = syscall_spawn(f2_func);
+    my_printf("f1 spawn f2: %d\n", res3);
+
+    int res7 = syscall_spawn(f3_func);
+    my_printf("f1 spawn f3: %d\n", res7);
 
     while (1)
     {
-        my_printf("f1 loop\n");
+        int res4 = syscall_sem_wait(MY_SEM_ID);
+        if (res4)
+            my_printf("f1 sem wait failed\n");
+        my_printf("f1 loop 1\n");
         syscall_sleep(1000);
+        my_printf("f1 loop 2\n");
+        syscall_sleep(1000);
+        my_printf("f1 loop 3\n");
+        syscall_sleep(1000);
+        int res5 = syscall_sem_post(MY_SEM_ID);
+        if (res5)
+            my_printf("f1 post wait failed\n");
     }
 }
 
@@ -124,16 +185,37 @@ void f2_func(void)
 {
     my_printf("f2 start\n");
 
-    syscall_spawn(f3_func);
+    syscall_sem_open(MY_SEM_ID);
+
+    while (1)
+    {
+        syscall_sem_wait(MY_SEM_ID);
+        my_printf("f2 loop 1\n");
+        syscall_sleep(1000);
+        my_printf("f2 loop 2\n");
+        syscall_sleep(1000);
+        my_printf("f2 loop 3\n");
+        syscall_sleep(1000);
+        syscall_sem_post(MY_SEM_ID);
+    }
 }
 
 void f3_func(void)
 {
     my_printf("f3 start\n");
-    for (int i = 0; i < 3; i++)
+
+    syscall_sem_open(MY_SEM_ID);
+
+    while (1)
     {
-        my_printf("f3 loop\n");
+        syscall_sem_wait(MY_SEM_ID);
+        my_printf("f3 loop 1\n");
         syscall_sleep(1000);
+        my_printf("f3 loop 2\n");
+        syscall_sleep(1000);
+        my_printf("f3 loop 3\n");
+        syscall_sleep(1000);
+        syscall_sem_post(MY_SEM_ID);
     }
 }
 

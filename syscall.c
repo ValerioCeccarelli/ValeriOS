@@ -81,6 +81,12 @@ void syscall_init(void)
     syscall_table[SYSCALL_EXIT] = internal_syscall_exit;
     syscall_table[SYSCALL_WAIT] = internal_syscall_wait;
     syscall_table[SYSCALL_SLEEP] = internal_syscall_sleep;
+    syscall_table[SYSCALL_SEM_CREATE] = internal_syscall_sem_create;
+    syscall_table[SYSCALL_SEM_CLOSE] = internal_syscall_sem_close;
+    syscall_table[SYSCALL_SEM_WAIT] = internal_syscall_sem_wait;
+    syscall_table[SYSCALL_SEM_POST] = internal_syscall_sem_post;
+    syscall_table[SYSCALL_SEM_OPEN] = internal_syscall_sem_open;
+    syscall_table[SYSCALL_SEM_UNLINK] = internal_syscall_sem_unlink;
 
     init_syscall_tcb();
 }
@@ -141,4 +147,29 @@ int syscall_wait_any(void)
 void syscall_sleep(int ms)
 {
     syscall(SYSCALL_SLEEP, 1, ms);
+}
+
+int syscall_sem_create(int id, int initial_count)
+{
+    return syscall(SYSCALL_SEM_CREATE, 2, id, initial_count);
+}
+int syscall_sem_close(int id)
+{
+    return syscall(SYSCALL_SEM_CLOSE, 1, id);
+}
+int syscall_sem_wait(int id)
+{
+    return syscall(SYSCALL_SEM_WAIT, 1, id);
+}
+int syscall_sem_post(int id)
+{
+    return syscall(SYSCALL_SEM_POST, 1, id);
+}
+int syscall_sem_open(int id)
+{
+    return syscall(SYSCALL_SEM_OPEN, 1, id);
+}
+int syscall_sem_unlink(int id)
+{
+    return syscall(SYSCALL_SEM_UNLINK, 1, id);
 }

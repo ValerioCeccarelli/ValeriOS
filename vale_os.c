@@ -9,6 +9,7 @@
 #include "interrupt.h"
 #include "syscall.h"
 #include "pid.h"
+#include "semaphore.h"
 
 #include <stdio.h>
 
@@ -34,12 +35,12 @@ void valeos_init(void)
     syscall_init();
     pid_init();
     scheduler_init();
+    semaphore_init();
 
     // printf("init allocator\n");
 
     pool_allocator_init(&tcb_allocator, (uint8_t *)tcb_memory, sizeof(tcb_t), MAX_THREAD_COUNT);
     pool_allocator_init(&tcb_node_allocator, (uint8_t *)tcb_node_memory, sizeof(list_node_t), MAX_THREAD_NODE_COUNT);
-
     // printf("init lists\n");
 
     list_init(&ready_list);

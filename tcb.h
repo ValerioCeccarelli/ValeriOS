@@ -36,6 +36,7 @@ typedef struct tcb
 
     int sleep_until;
 
+    list_t semaphores;
 } tcb_t;
 
 void tcb_init(tcb_t *tcb, int8_t pid, tcb_t *parent_tcb, void (*entry_point)(void));
